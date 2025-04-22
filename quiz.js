@@ -16,7 +16,14 @@ class Question {
 
 class YesNoQuestion extends Question {
     ask() {
-        const answer = prompt(`${this.questionText} (Answer "yes" or "no")`);
+        let answer;
+        do {
+            answer = prompt(`${this.questionText} (Answer "yes" or "no")`).trim().toLowerCase();
+            if (answer !== "yes" && answer !== "no") {
+                alert("Invalid answer. Please answer with 'yes' or 'no'.");
+            }
+        } while (answer !== "yes" && answer !== "no")
+
         this.userAnswer = answer;
         return this.checkAnswer(answer);
     }
@@ -24,7 +31,14 @@ class YesNoQuestion extends Question {
 
 class ShortAnswerQuestion extends Question {
     ask() {
-        const answer = prompt(`${this.questionText}`);
+        let answer;
+        do {
+            answer = prompt(`${this.questionText}`).trim();
+            if (!answer) {
+                alert("Answer cannot be empty. Please provide a valid response.");
+            }
+        } while (!answer);
+
         this.userAnswer = answer;
         return this.checkAnswer(answer);
     }
@@ -42,15 +56,24 @@ class SingleChoiceQuestion extends Question {
             question += `${key}) ${this.options[key]}\n`;
         }
         question += "Answer a, b, c or d.";
-        const userAnswer = prompt(question);
-        this.userAnswer = userAnswer;
-        return this.checkAnswer(userAnswer);
+
+        let answer;
+        do {
+            answer = prompt(question).trim().toLowerCase();
+            if(!["a", "b", "c", "d"].includes(answer)) {
+                alert("Invalid choice. Please select 'a', 'b', 'c', or 'd'.");
+            }
+        } while (!["a", "b", "c", "d"].includes(answer))
+
+        this.answer = answer;
+
+        return this.checkAnswer(answer);
     }
 }
 
 class MultipleChoicesQuestion extends Question {
-    constructor(questionText, options, correctAnswer) {
-        const normalizedAnswers = correctAnswer.map(answer => answer.toLowerCase());
+    constructor(questionText, options, correctAnswers) {
+        const normalizedAnswers = correctAnswers.map(answer => answer.toLowerCase());
         super(questionText, normalizedAnswers.sort().join(","));
         this.options = options;
         this.correctAnswersSet = new Set(normalizedAnswers);
@@ -62,15 +85,22 @@ class MultipleChoicesQuestion extends Question {
             question += `${key}) ${this.options[key]}\n`;
         }
         question += "Answer a, b, c or d. Divide your answers using commas.";
-        const userAnswer = prompt(question);
-        this.userAnswer = userAnswer;
+        let answer;
+        let cleanedAnswer;
+        do {
+            answer = prompt(question).trim().toLowerCase();
+            cleanedAnswer = answer
+                .split(",")
+                .map(answer => answer.trim())
+                .filter(Boolean);
+            if (cleanedAnswer.length === 0 || cleanedAnswer.some(answer => !["a", "b", "c", "d"].includes(answer))) {
+                alert("Invalid input. Please enter valid options (a, b, c, d), separated by commas.");
+            }
+        } while (cleanedAnswer.length === 0 || cleanedAnswer.some(answer => !["a", "b", "c", "d"].includes(answer)));
+         
+        this.userAnswer = answer;
 
-        const cleanedUserAnswer = userAnswer
-            .toLowerCase()
-            .split(",")
-            .map(answer => answer.trim())
-            .filter(Boolean);
-        const userAnswerCleanedSet = new Set(cleanedUserAnswer); 
+        const userAnswerCleanedSet = new Set(cleanedAnswer); 
 
         if (userAnswerCleanedSet.size !== this.correctAnswersSet.size) {
             return false;
@@ -115,17 +145,26 @@ class QuizAttempt {
 class Quiz {
     constructor(questions) {
         this.questions = questions;
+        this.attempt = new QuizAttempt();
     }
 
     start() {
-        const attempt = new QuizAttempt();
+        this.askAllQuestions();
+        this.showFinalResults();
+        return this.attempt.score;
+    }
+
+    askAllQuestions() {
         for (let question of this.questions) {
             const isCorrect = question.ask();
-            attempt.addResult(question, question.userAnswer, isCorrect);
+            this.attempt.addResult(question, question.userAnswer, isCorrect);
         }
-        attempt.showResults();
-        return attempt.score;
     }
+
+    showFinalResults() {
+        this.attempt.showResults()
+    }
+
 }
 
 window.onload = function () {
