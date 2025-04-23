@@ -5,7 +5,7 @@ class Question {
   }
 
   ask() {
-    throw new Error("Method 'ask() must be implemented.");
+    throw new Error("Method 'ask()' must be implemented.");
   }
 
   checkAnswer(userAnswer) {
